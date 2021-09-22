@@ -9,5 +9,4 @@ Todo
 <li>Show file size</li>
 <li>Show + sign if folder contains something</li>
 <li>Show date modified</li>
-<li>Add Help with About</li>
 </ul>

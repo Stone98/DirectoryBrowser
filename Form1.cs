@@ -204,15 +204,15 @@ namespace DirectoryBrowser
                     file.Tag = item.FullName;
                     string[] parts = item.FullName.Split('.');
                     file.ForeColor = Color.Gray;
-                    if(parts.Length > 1)
+                    if (parts.Length > 1)
                     {
-                        string ext = ("." + parts[parts.Length-1]).ToLower();
+                        string ext = ("." + parts[parts.Length - 1]).ToLower();
                         if (this.browserFileTypes.Where(x => x == ext).FirstOrDefault() != null)
                         {
                             file.ForeColor = Color.Black;
                         }
 
-                       
+
                     }
                     this.treeView1.Nodes.Add(file);
                 }
@@ -251,6 +251,16 @@ namespace DirectoryBrowser
                     ChangeDirectory(path, false);
                 }
             }
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string title = "About Directory Browser";
+            string message = "The Directory Browser will provide previews for the following file types: ";
+            string fileTypes = String.Join(", ", this.browserFileTypes.OrderBy(x => x));
+            message += Environment.NewLine;
+            message += fileTypes;
+            MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
