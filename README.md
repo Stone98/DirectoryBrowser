@@ -5,7 +5,6 @@
 Todo
 <ul>
 <li>Add option for users to select supported file extensions</li>
-<li>Add option to copy path of file</li>
 <li>Show file size</li>
 <li>Show + sign if folder contains something</li>
 <li>Show date modified</li>

@@ -14,12 +14,16 @@ namespace DirectoryBrowser
     public partial class Form1 : Form
     {
         private ImageList imageList1;
+        private ContextMenuStrip folderContextMenu;
+        private ContextMenuStrip fileContextMenu;
+        private bool isRightClickOperation = false;
         String[] browserFileTypes = new String[] { ".jpg", ".jpeg", ".png", ".gif", ".svg", ".bmp", ".html", ".htm", ".txt", ".md", ".ini", ".sql", ".json", ".js" };
         bool processEvents = false;
         Timer timer = new Timer();
         OpenFileDialog openFileDialog1 = null;
         FolderBrowserDialog folderBrowserDialog1 = null;
         string initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        
         public Form1()
         {
             InitializeComponent();
@@ -27,6 +31,10 @@ namespace DirectoryBrowser
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
             imageList1.ImageSize = new Size(16, 16);
             this.treeView1.ImageList = imageList1;
+            
+            // Initialize context menus
+            InitializeContextMenus();
+            
             timer.Tick += Timer_Tick;
             this.treeView1.Visible = false;
             this.treeView1.Enabled = false;
@@ -40,6 +48,90 @@ namespace DirectoryBrowser
             Startup();
             timer.Interval = 1000;
             timer.Start();
+        }
+
+        private void InitializeContextMenus()
+        {
+            // Create folder context menu
+            folderContextMenu = new ContextMenuStrip();
+            var copyFolderPathItem = new ToolStripMenuItem("Copy Folder Path");
+            copyFolderPathItem.Click += CopyFolderPath_Click;
+            folderContextMenu.Items.Add(copyFolderPathItem);
+
+            // Create file context menu
+            fileContextMenu = new ContextMenuStrip();
+            var copyFilePathItem = new ToolStripMenuItem("Copy File Path");
+            copyFilePathItem.Click += CopyFilePath_Click;
+            fileContextMenu.Items.Add(copyFilePathItem);
+
+            // Add mouse events to TreeView
+            this.treeView1.MouseDown += TreeView1_MouseDown;
+            this.treeView1.MouseUp += TreeView1_MouseUp;
+        }
+
+        private void TreeView1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                isRightClickOperation = true;
+                
+                // Get the node at the clicked location
+                TreeNode clickedNode = treeView1.GetNodeAt(e.X, e.Y);
+                if (clickedNode != null && !String.IsNullOrEmpty(clickedNode.Tag as String))
+                {
+                    // Select the node
+                    treeView1.SelectedNode = clickedNode;
+                    
+                    string path = clickedNode.Tag as String;
+                    
+                    // Determine if it's a file or folder and show appropriate context menu
+                    if (Directory.Exists(path))
+                    {
+                        folderContextMenu.Show(treeView1, e.Location);
+                    }
+                    else if (File.Exists(path))
+                    {
+                        fileContextMenu.Show(treeView1, e.Location);
+                    }
+                }
+            }
+        }
+
+        private void TreeView1_MouseUp(object sender, MouseEventArgs e)
+        {
+            // Reset the flag after a short delay to allow context menu to show
+            if (e.Button == MouseButtons.Right)
+            {
+                Timer resetTimer = new Timer();
+                resetTimer.Interval = 100;
+                resetTimer.Tick += (s, args) =>
+                {
+                    isRightClickOperation = false;
+                    resetTimer.Stop();
+                    resetTimer.Dispose();
+                };
+                resetTimer.Start();
+            }
+        }
+
+        private void CopyFolderPath_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null && !String.IsNullOrEmpty(treeView1.SelectedNode.Tag as String))
+            {
+                string folderPath = treeView1.SelectedNode.Tag as String;
+                Clipboard.SetText(folderPath);
+                this.toolStripStatusLabel1.Text = $"Copied folder path: {folderPath}";
+            }
+        }
+
+        private void CopyFilePath_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null && !String.IsNullOrEmpty(treeView1.SelectedNode.Tag as String))
+            {
+                string filePath = treeView1.SelectedNode.Tag as String;
+                Clipboard.SetText(filePath);
+                this.toolStripStatusLabel1.Text = $"Copied file path: {filePath}";
+            }
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -249,6 +341,10 @@ namespace DirectoryBrowser
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            // Don't process selection if it's from a right-click operation
+            if (isRightClickOperation)
+                return;
+                
             var node = this.treeView1.SelectedNode;
             if (node != null && !String.IsNullOrEmpty(node.Tag as String))
             {
