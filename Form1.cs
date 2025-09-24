@@ -13,6 +13,7 @@ namespace DirectoryBrowser
 {
     public partial class Form1 : Form
     {
+        private ImageList imageList1;
         String[] browserFileTypes = new String[] { ".jpg", ".jpeg", ".png", ".gif", ".svg", ".bmp", ".html", ".htm", ".txt", ".md", ".ini", ".sql", ".json", ".js" };
         bool processEvents = false;
         Timer timer = new Timer();
@@ -22,6 +23,10 @@ namespace DirectoryBrowser
         public Form1()
         {
             InitializeComponent();
+            imageList1 = new ImageList();
+            imageList1.ColorDepth = ColorDepth.Depth32Bit;
+            imageList1.ImageSize = new Size(16, 16);
+            this.treeView1.ImageList = imageList1;
             timer.Tick += Timer_Tick;
             this.treeView1.Visible = false;
             this.treeView1.Enabled = false;
@@ -142,6 +147,7 @@ namespace DirectoryBrowser
 
         private void ChangeDirectory(string directory, bool force)
         {
+            this.imageList1.Images.Clear();
             if (!processEvents && !force)
             {
                 return;
@@ -178,11 +184,21 @@ namespace DirectoryBrowser
                     this.toolStripStatusLabel1.Text = "Cannot show directory";
                 }
 
+                Icon folderIcon = FolderIconHelper.GetSmallFolderIcon();
+                string folderKey = "folder";
+                imageList1.Images.Add(folderKey, folderIcon); // Use file extension or path as key
+
                 foreach (var item in directories)
                 {
                     TreeNode dir = new TreeNode();
-                    dir.Text = "[] " + item.Name;
+                    dir.Text = item.Name;
                     dir.Tag = item.FullName;
+                    
+                    if (folderIcon != null)
+                    {
+                        dir.ImageKey = folderKey;
+                        dir.SelectedImageKey = folderKey;
+                    }
                     this.treeView1.Nodes.Add(dir);
                 }
                 List<FileInfo> files = null;
@@ -213,6 +229,14 @@ namespace DirectoryBrowser
                         }
 
 
+                    }
+                    string filePath = item.FullName;
+                    Icon icon = FileIconHelper.GetSmallIcon(filePath);
+                    if (icon != null)
+                    {
+                        imageList1.Images.Add(filePath, icon); // Use file extension or path as key
+                        file.ImageKey = filePath;
+                        file.SelectedImageKey = filePath;
                     }
                     this.treeView1.Nodes.Add(file);
                 }

@@ -4,7 +4,6 @@
 <img src="DirectoryBrowserImg.png"/>
 Todo
 <ul>
-<li>Add images to treeView</li>
 <li>Add option for users to select supported file extensions</li>
 <li>Add option to copy path of file</li>
 <li>Show file size</li>
