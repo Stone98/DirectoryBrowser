@@ -246,6 +246,9 @@ namespace DirectoryBrowser
             Icon goUpIcon = GoUpIconHelper.GetSmallUpArrowIcon();
             string goUpKey = "goUp";
             imageList1.Images.Add(goUpKey, goUpIcon); // Use up arrow icon for "Go up"
+            Icon refreshIcon = SystemIcons.Information; // Placeholder icon
+            string refreshKey = "refresh";
+            imageList1.Images.Add(refreshKey, refreshIcon); // Use refresh icon for "Refresh"
             this.treeView1.Nodes.Clear();
             if (!processEvents && !force)
             {
@@ -287,6 +290,12 @@ namespace DirectoryBrowser
                 }
                 TreeNode node = new TreeNode();
                 node.Text = directory;
+                node.Tag = directory;
+                if (refreshIcon != null)
+                {
+                    node.ImageKey = refreshKey;
+                    node.SelectedImageKey = refreshKey;
+                }
                 this.treeView1.Nodes.Add(node);
                 List<DirectoryInfo> directories = null;
                 try
