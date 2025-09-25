@@ -8,4 +8,6 @@ Todo
 <li>Show file size</li>
 <li>Show + sign if folder contains something</li>
 <li>Show date modified</li>
+<li>Add search functionality</li>
+<li>Add multiple view modes, list and table</li>
 </ul>

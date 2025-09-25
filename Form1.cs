@@ -240,21 +240,37 @@ namespace DirectoryBrowser
         private void ChangeDirectory(string directory, bool force)
         {
             this.imageList1.Images.Clear();
+            Icon folderIcon = FolderIconHelper.GetSmallFolderIcon();
+            string folderKey = "folder";
+            imageList1.Images.Add(folderKey, folderIcon); // Use file extension or path as key
+            this.treeView1.Nodes.Clear();
             if (!processEvents && !force)
             {
                 return;
             }
             this.toolStripStatusLabel1.Text = directory;
+            if (String.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+            {
+                string[] drives = Environment.GetLogicalDrives();
+                foreach (string drive in drives)
+                {
+                    TreeNode dirNode = new TreeNode();
+                    dirNode.Text = drive;
+                    dirNode.Tag = drive;
+                    this.treeView1.Nodes.Add(dirNode);
+
+                }
+            }
             if (Directory.Exists(directory))
             {
                 DirectoryInfo di = new DirectoryInfo(directory);
-                this.treeView1.Nodes.Clear();
+                
                 string parentDir = null;
                 if (di.Parent != null)
                 {
                     parentDir = di.Parent.FullName;
                 };
-                if (!String.IsNullOrWhiteSpace(parentDir))
+                if (!String.IsNullOrWhiteSpace(directory))
                 {
                     TreeNode rootNode = new TreeNode();
                     rootNode.Tag = parentDir;
@@ -276,10 +292,7 @@ namespace DirectoryBrowser
                     this.toolStripStatusLabel1.Text = "Cannot show directory";
                 }
 
-                Icon folderIcon = FolderIconHelper.GetSmallFolderIcon();
-                string folderKey = "folder";
-                imageList1.Images.Add(folderKey, folderIcon); // Use file extension or path as key
-
+                
                 foreach (var item in directories)
                 {
                     TreeNode dir = new TreeNode();
@@ -346,10 +359,14 @@ namespace DirectoryBrowser
                 return;
                 
             var node = this.treeView1.SelectedNode;
-            if (node != null && !String.IsNullOrEmpty(node.Tag as String))
+            if (node != null)
             {
                 var path = node.Tag as String;
-                if (File.Exists(path))
+                if (String.IsNullOrWhiteSpace(path))
+                {
+                    ChangeDirectory(null, false);
+                }
+                else if (File.Exists(path))
                 {
                     FileInfo fi = new FileInfo(path);
                     string ext = fi.Extension;
