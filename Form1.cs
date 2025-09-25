@@ -17,7 +17,7 @@ namespace DirectoryBrowser
         private ContextMenuStrip folderContextMenu;
         private ContextMenuStrip fileContextMenu;
         private bool isRightClickOperation = false;
-        String[] browserFileTypes = new String[] { ".jpg", ".jpeg", ".png", ".gif", ".svg", ".bmp", ".html", ".htm", ".txt", ".md", ".ini", ".sql", ".json", ".js" };
+        String[] browserFileTypes = new String[] { ".css", ".py", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".bmp", ".html", ".htm", ".txt", ".md", ".ini", ".sql", ".json", ".js" };
         bool processEvents = false;
         Timer timer = new Timer();
         OpenFileDialog openFileDialog1 = null;
@@ -63,6 +63,11 @@ namespace DirectoryBrowser
             var copyFilePathItem = new ToolStripMenuItem("Copy File Path");
             copyFilePathItem.Click += CopyFilePath_Click;
             fileContextMenu.Items.Add(copyFilePathItem);
+            
+            // Add OneDrive status item
+            var oneDriveStatusItem = new ToolStripMenuItem("OneDrive Status");
+            oneDriveStatusItem.Click += OneDriveStatus_Click;
+            fileContextMenu.Items.Add(oneDriveStatusItem);
 
             // Add mouse events to TreeView
             this.treeView1.MouseDown += TreeView1_MouseDown;
@@ -198,7 +203,46 @@ namespace DirectoryBrowser
         {
             if (File.Exists(fileName))
             {
-                this.webView21.Source = new Uri(fileName);
+                // Check if it's a OneDrive cloud file
+                OneDriveStatus oneDriveStatus = OneDriveHelper.GetOneDriveStatus(fileName);
+                
+                if (oneDriveStatus == OneDriveStatus.CloudOnly)
+                {
+                    // Show warning for cloud-only files
+                    DialogResult result = MessageBox.Show(
+                        $"This file is stored in OneDrive cloud and may need to be downloaded before viewing.\n\n" +
+                        $"File: {Path.GetFileName(fileName)}\n" +
+                        $"Status: {OneDriveHelper.GetStatusDescription(oneDriveStatus)}\n\n" +
+                        $"Do you want to try to open it anyway? This may trigger a download.",
+                        "OneDrive Cloud File",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+                    
+                    if (result == DialogResult.No)
+                    {
+                        this.webView21.CoreWebView2.NavigateToString(
+                            $"<html><body><h2>OneDrive Cloud File</h2>" +
+                            $"<p>File: <strong>{Path.GetFileName(fileName)}</strong></p>" +
+                            $"<p>Status: <strong>{OneDriveHelper.GetStatusDescription(oneDriveStatus)}</strong></p>" +
+                            $"<p>This file needs to be downloaded from OneDrive before it can be viewed.</p>" +
+                            $"</body></html>");
+                        return;
+                    }
+                }
+                
+                try
+                {
+                    this.webView21.Source = new Uri(fileName);
+                }
+                catch (Exception ex)
+                {
+                    string errorMessage = "Unable to show file contents.";
+                    if (oneDriveStatus == OneDriveStatus.CloudOnly)
+                    {
+                        errorMessage += " The file may need to be downloaded from OneDrive first.";
+                    }
+                    this.webView21.CoreWebView2.NavigateToString($"<html><body><h2>Error</h2><p>{errorMessage}</p><p>Error details: {ex.Message}</p></body></html>");
+                }
             }
             else
             {
@@ -342,6 +386,10 @@ namespace DirectoryBrowser
                     file.Tag = item.FullName;
                     string[] parts = item.FullName.Split('.');
                     file.ForeColor = Color.Gray;
+                    
+                    // Check OneDrive status
+                    OneDriveStatus oneDriveStatus = OneDriveHelper.GetOneDriveStatus(item.FullName);
+                    
                     if (parts.Length > 1)
                     {
                         string ext = ("." + parts[parts.Length - 1]).ToLower();
@@ -349,9 +397,21 @@ namespace DirectoryBrowser
                         {
                             file.ForeColor = Color.Black;
                         }
-
-
                     }
+                    
+                    // Apply OneDrive-specific styling
+                    if (oneDriveStatus == OneDriveStatus.CloudOnly)
+                    {
+                        // Make cloud-only files appear lighter/dimmed and add cloud indicator
+                        file.ForeColor = Color.LightBlue;
+                        file.Text = item.Name + " ☁"; // Add cloud symbol
+                        file.ToolTipText = "OneDrive cloud file - " + OneDriveHelper.GetStatusDescription(oneDriveStatus);
+                    }
+                    else if (oneDriveStatus == OneDriveStatus.LocallyAvailable)
+                    {
+                        file.ToolTipText = "OneDrive file - " + OneDriveHelper.GetStatusDescription(oneDriveStatus);
+                    }
+                    
                     string filePath = item.FullName;
                     Icon icon = FileIconHelper.GetSmallIcon(filePath);
                     if (icon != null)
@@ -411,6 +471,27 @@ namespace DirectoryBrowser
             message += Environment.NewLine;
             message += fileTypes;
             MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void OneDriveStatus_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null && !String.IsNullOrEmpty(treeView1.SelectedNode.Tag as String))
+            {
+                string filePath = treeView1.SelectedNode.Tag as String;
+                OneDriveStatus status = OneDriveHelper.GetOneDriveStatus(filePath);
+                
+                string message = $"File: {Path.GetFileName(filePath)}\n" +
+                               $"OneDrive Status: {OneDriveHelper.GetStatusDescription(status)}\n" +
+                               $"In OneDrive Folder: {(OneDriveHelper.IsInOneDriveFolder(filePath) ? "Yes" : "No")}";
+                
+                if (status == OneDriveStatus.CloudOnly)
+                {
+                    message += "\n\nThis file is stored in the cloud and may need to be downloaded before it can be accessed.";
+                }
+                
+                MessageBox.Show(message, "OneDrive File Status", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.toolStripStatusLabel1.Text = $"OneDrive Status: {OneDriveHelper.GetStatusDescription(status)}";
+            }
         }
     }
 }
