@@ -346,10 +346,6 @@ namespace DirectoryBrowser
                     this.treeView1.Nodes.Add(file);
                 }
             }
-            else
-            {
-                MessageBox.Show($"{directory} does not exist.");
-            }
         }
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
