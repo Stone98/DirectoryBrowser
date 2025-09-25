@@ -243,6 +243,9 @@ namespace DirectoryBrowser
             Icon folderIcon = FolderIconHelper.GetSmallFolderIcon();
             string folderKey = "folder";
             imageList1.Images.Add(folderKey, folderIcon); // Use file extension or path as key
+            Icon goUpIcon = GoUpIconHelper.GetSmallUpArrowIcon();
+            string goUpKey = "goUp";
+            imageList1.Images.Add(goUpKey, goUpIcon); // Use up arrow icon for "Go up"
             this.treeView1.Nodes.Clear();
             if (!processEvents && !force)
             {
@@ -275,6 +278,11 @@ namespace DirectoryBrowser
                     TreeNode rootNode = new TreeNode();
                     rootNode.Tag = parentDir;
                     rootNode.Text = "Go up";
+                    if (goUpIcon != null)
+                    {
+                        rootNode.ImageKey = goUpKey;
+                        rootNode.SelectedImageKey = goUpKey;
+                    }
                     this.treeView1.Nodes.Add(rootNode);
                 }
                 TreeNode node = new TreeNode();
