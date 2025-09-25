@@ -37,49 +37,61 @@ public static class GoUpIconHelper
         {
             // Enable anti-aliasing for smoother drawing
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             
             // Clear the background
             g.Clear(Color.Transparent);
             
-            // Calculate arrow dimensions based on icon size
-            int margin = size / 8; // Small margin around the arrow
-            int arrowWidth = size - (margin * 2);
-            int arrowHeight = size - (margin * 2);
+            // Calculate dimensions
+            float centerX = size / 2f;
+            float centerY = size / 2f;
+            float arrowSize = size * 0.7f; // Use 70% of the icon size
+            float margin = (size - arrowSize) / 2f;
             
-            // Define the arrow points
-            Point[] arrowPoints = new Point[]
+            // Create gradient brush for modern look
+            using (LinearGradientBrush gradientBrush = new LinearGradientBrush(
+                new PointF(0, margin),
+                new PointF(0, margin + arrowSize),
+                Color.FromArgb(60, 120, 180), // Blue gradient start
+                Color.FromArgb(40, 80, 140)))  // Blue gradient end
             {
-                // Top point (tip of arrow)
-                new Point(size / 2, margin),
+                // Define arrow points for a sleek chevron-style arrow
+                PointF[] arrowPoints = new PointF[]
+                {
+                    // Top point (tip of arrow)
+                    new PointF(centerX, margin),
+                    
+                    // Right side points
+                    new PointF(centerX + arrowSize * 0.35f, margin + arrowSize * 0.4f),
+                    new PointF(centerX + arrowSize * 0.15f, margin + arrowSize * 0.4f),
+                    new PointF(centerX + arrowSize * 0.15f, margin + arrowSize * 0.85f),
+                    
+                    // Bottom right
+                    new PointF(centerX - arrowSize * 0.15f, margin + arrowSize * 0.85f),
+                    
+                    // Left side points (mirror of right)
+                    new PointF(centerX - arrowSize * 0.15f, margin + arrowSize * 0.4f),
+                    new PointF(centerX - arrowSize * 0.35f, margin + arrowSize * 0.4f)
+                };
                 
-                // Bottom left point
-                new Point(margin, margin + arrowHeight),
+                // Fill the arrow with gradient
+                g.FillPolygon(gradientBrush, arrowPoints);
                 
-                // Bottom left inner point (for arrow shaft)
-                new Point(margin + arrowWidth / 3, margin + arrowHeight),
+                // Add subtle highlight on top edge
+                using (Pen highlightPen = new Pen(Color.FromArgb(120, Color.White), 1.5f))
+                {
+                    highlightPen.LineJoin = LineJoin.Round;
+                    // Draw highlight on the top edges
+                    g.DrawLine(highlightPen, arrowPoints[6], arrowPoints[0]); // Left top edge
+                    g.DrawLine(highlightPen, arrowPoints[0], arrowPoints[1]); // Right top edge
+                }
                 
-                // Bottom left shaft point
-                new Point(margin + arrowWidth / 3, margin + (arrowHeight * 2 / 3)),
-                
-                // Bottom right shaft point
-                new Point(size - margin - arrowWidth / 3, margin + (arrowHeight * 2 / 3)),
-                
-                // Bottom right inner point (for arrow shaft)
-                new Point(size - margin - arrowWidth / 3, margin + arrowHeight),
-                
-                // Bottom right point
-                new Point(size - margin, margin + arrowHeight)
-            };
-            
-            // Create brushes and pens
-            using (SolidBrush brush = new SolidBrush(Color.FromArgb(80, 80, 80))) // Dark gray
-            using (Pen pen = new Pen(Color.FromArgb(40, 40, 40), 1)) // Darker outline
-            {
-                // Fill the arrow
-                g.FillPolygon(brush, arrowPoints);
-                
-                // Draw the arrow outline
-                g.DrawPolygon(pen, arrowPoints);
+                // Add subtle shadow/outline
+                using (Pen outlinePen = new Pen(Color.FromArgb(80, Color.Black), 1f))
+                {
+                    outlinePen.LineJoin = LineJoin.Round;
+                    g.DrawPolygon(outlinePen, arrowPoints);
+                }
             }
             
             // Convert bitmap to icon

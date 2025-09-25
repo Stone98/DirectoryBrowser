@@ -37,82 +37,104 @@ public static class RefreshIconHelper
         {
             // Enable anti-aliasing for smoother drawing
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             
             // Clear the background
             g.Clear(Color.Transparent);
             
             // Calculate dimensions
-            int margin = size / 8;
-            int circleSize = size - (margin * 2);
-            int penWidth = Math.Max(1, size / 12);
-            int arrowSize = Math.Max(2, size / 6);
+            float centerX = size / 2f;
+            float centerY = size / 2f;
+            float outerRadius = size * 0.4f;
+            float innerRadius = size * 0.25f;
+            float penWidth = Math.Max(1.5f, size / 10f);
             
-            // Create pen for drawing the circular arrows
-            using (Pen pen = new Pen(Color.FromArgb(80, 80, 80), penWidth))
+            // Create gradient pen for modern look
+            using (LinearGradientBrush gradientBrush = new LinearGradientBrush(
+                new PointF(0, 0),
+                new PointF(size, size),
+                Color.FromArgb(50, 150, 50),  // Green gradient start
+                Color.FromArgb(30, 100, 30))) // Green gradient end
             {
-                pen.StartCap = LineCap.Round;
-                pen.EndCap = LineCap.Round;
+                using (Pen gradientPen = new Pen(gradientBrush, penWidth))
+                {
+                    gradientPen.StartCap = LineCap.Round;
+                    gradientPen.EndCap = LineCap.Round;
+                    
+                    // Calculate arc rectangle
+                    RectangleF arcRect = new RectangleF(
+                        centerX - outerRadius,
+                        centerY - outerRadius,
+                        outerRadius * 2,
+                        outerRadius * 2);
+                    
+                    // Draw main circular arc (300 degrees, leaving gaps for arrows)
+                    g.DrawArc(gradientPen, arcRect, -30, 300);
+                    
+                    // Calculate arrow positions and draw arrow heads
+                    DrawModernArrowHead(g, centerX, centerY, outerRadius, -30, gradientBrush, size); // Top-right arrow
+                    DrawModernArrowHead(g, centerX, centerY, outerRadius, 270, gradientBrush, size); // Bottom-left arrow
+                }
+            }
+            
+            // Add inner highlight circle for depth
+            using (Pen highlightPen = new Pen(Color.FromArgb(40, Color.White), Math.Max(1f, penWidth * 0.6f)))
+            {
+                RectangleF innerRect = new RectangleF(
+                    centerX - innerRadius,
+                    centerY - innerRadius,
+                    innerRadius * 2,
+                    innerRadius * 2);
                 
-                // Draw the main circular arc (about 270 degrees)
-                Rectangle circleRect = new Rectangle(margin, margin, circleSize, circleSize);
-                g.DrawArc(pen, circleRect, -45, 270);
-                
-                // Calculate arrow positions
-                float centerX = size / 2f;
-                float centerY = size / 2f;
-                float radius = circleSize / 2f;
-                
-                // Draw arrow head 1 (top right)
-                float angle1 = (float)(-45 * Math.PI / 180); // -45 degrees in radians
-                float arrowX1 = centerX + (float)(radius * Math.Cos(angle1));
-                float arrowY1 = centerY + (float)(radius * Math.Sin(angle1));
-                
-                // Arrow head points
-                float arrowAngle1 = angle1 + (float)(Math.PI / 6); // 30 degrees
-                float arrowAngle2 = angle1 - (float)(Math.PI / 6); // -30 degrees
-                
-                PointF arrow1Point1 = new PointF(
-                    arrowX1 - arrowSize * (float)Math.Cos(arrowAngle1),
-                    arrowY1 - arrowSize * (float)Math.Sin(arrowAngle1)
-                );
-                
-                PointF arrow1Point2 = new PointF(
-                    arrowX1 - arrowSize * (float)Math.Cos(arrowAngle2),
-                    arrowY1 - arrowSize * (float)Math.Sin(arrowAngle2)
-                );
-                
-                // Draw first arrow head
-                g.DrawLine(pen, arrowX1, arrowY1, arrow1Point1.X, arrow1Point1.Y);
-                g.DrawLine(pen, arrowX1, arrowY1, arrow1Point2.X, arrow1Point2.Y);
-                
-                // Draw arrow head 2 (bottom left)
-                float angle2 = (float)((225) * Math.PI / 180); // 225 degrees in radians
-                float arrowX2 = centerX + (float)(radius * Math.Cos(angle2));
-                float arrowY2 = centerY + (float)(radius * Math.Sin(angle2));
-                
-                // Arrow head points (pointing in opposite direction)
-                float arrowAngle3 = angle2 - (float)(Math.PI / 6); // -30 degrees from arc direction
-                float arrowAngle4 = angle2 + (float)(Math.PI / 6); // +30 degrees from arc direction
-                
-                PointF arrow2Point1 = new PointF(
-                    arrowX2 - arrowSize * (float)Math.Cos(arrowAngle3),
-                    arrowY2 - arrowSize * (float)Math.Sin(arrowAngle3)
-                );
-                
-                PointF arrow2Point2 = new PointF(
-                    arrowX2 - arrowSize * (float)Math.Cos(arrowAngle4),
-                    arrowY2 - arrowSize * (float)Math.Sin(arrowAngle4)
-                );
-                
-                // Draw second arrow head
-                g.DrawLine(pen, arrowX2, arrowY2, arrow2Point1.X, arrow2Point1.Y);
-                g.DrawLine(pen, arrowX2, arrowY2, arrow2Point2.X, arrow2Point2.Y);
+                g.DrawArc(highlightPen, innerRect, 45, 180);
             }
             
             // Convert bitmap to icon
             IntPtr hIcon = bitmap.GetHicon();
             Icon icon = Icon.FromHandle(hIcon);
             return (Icon)icon.Clone();
+        }
+    }
+    
+    /// <summary>
+    /// Draws a modern triangular arrow head at the specified position.
+    /// </summary>
+    private static void DrawModernArrowHead(Graphics g, float centerX, float centerY, float radius, 
+        float angleDegrees, LinearGradientBrush brush, int iconSize)
+    {
+        float angleRadians = (float)(angleDegrees * Math.PI / 180);
+        float arrowSize = Math.Max(3, iconSize / 4f);
+        
+        // Calculate arrow tip position
+        float tipX = centerX + radius * (float)Math.Cos(angleRadians);
+        float tipY = centerY + radius * (float)Math.Sin(angleRadians);
+        
+        // Calculate arrow base points
+        float baseAngle1 = angleRadians + (float)(Math.PI * 0.8); // 144 degrees offset
+        float baseAngle2 = angleRadians - (float)(Math.PI * 0.8); // -144 degrees offset
+        
+        float base1X = tipX + arrowSize * (float)Math.Cos(baseAngle1);
+        float base1Y = tipY + arrowSize * (float)Math.Sin(baseAngle1);
+        
+        float base2X = tipX + arrowSize * (float)Math.Cos(baseAngle2);
+        float base2Y = tipY + arrowSize * (float)Math.Sin(baseAngle2);
+        
+        // Create arrow triangle
+        PointF[] arrowPoints = new PointF[]
+        {
+            new PointF(tipX, tipY),
+            new PointF(base1X, base1Y),
+            new PointF(base2X, base2Y)
+        };
+        
+        // Fill arrow with gradient
+        g.FillPolygon(brush, arrowPoints);
+        
+        // Add subtle outline
+        using (Pen outlinePen = new Pen(Color.FromArgb(60, Color.Black), 1f))
+        {
+            outlinePen.LineJoin = LineJoin.Round;
+            g.DrawPolygon(outlinePen, arrowPoints);
         }
     }
 }
