@@ -246,9 +246,9 @@ namespace DirectoryBrowser
             Icon goUpIcon = GoUpIconHelper.GetSmallUpArrowIcon();
             string goUpKey = "goUp";
             imageList1.Images.Add(goUpKey, goUpIcon); // Use up arrow icon for "Go up"
-            Icon refreshIcon = SystemIcons.Information; // Placeholder icon
+            Icon refreshIcon = RefreshIconHelper.GetSmallRefreshIcon();
             string refreshKey = "refresh";
-            imageList1.Images.Add(refreshKey, refreshIcon); // Use refresh icon for "Refresh"
+            imageList1.Images.Add(refreshKey, refreshIcon); // Use refresh icon for current directory
             this.treeView1.Nodes.Clear();
             if (!processEvents && !force)
             {
