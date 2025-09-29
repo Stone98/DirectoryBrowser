@@ -1,4 +1,7 @@
-﻿# 📁 Directory Browser
+﻿<p align="center" style="display: flex; align-items: center;">
+  <img src="DBrowser.png" style="width:50px; vertical-align:middle; margin-right:12px;">
+  <span style="font-size:2em; vertical-align:middle;"><b>Directory Browser</b></span>
+</p>
 
 A modern, feature-rich Windows Forms application for browsing and previewing files on your local computer with integrated **OneDrive support** and advanced file management capabilities.
 
